@@ -67,16 +67,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     //checking advertising status
-    private var isAdvertising = false
+   private var isAdvertising = false
         set(value) {
             field = value
             // update visual state of the switch
-            runBlocking {
-                launch(Dispatchers.IO) {
-                     if (value != binding.switchAdvertising.isChecked)
+            runOnUiThread {
+                Handler().postDelayed( {
+                    if (value != binding.switchAdvertising.isChecked)
                         binding.switchAdvertising.isChecked = value
-                }
-                delay(200)
+                }, 200)
             }
         }
 
@@ -186,7 +185,7 @@ class MainActivity : AppCompatActivity() {
      * This represents the data to be advertised as well as the scan response data for active scans
      * Don't include name, because if name size > 8 bytes, ADVERTISE_FAILED_DATA_TOO_LARGE*/
     private val advertiseData = AdvertiseData.Builder()
-        .setIncludeDeviceName(true)
+        .setIncludeDeviceName(false)
         .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
         .build()
 
