@@ -18,7 +18,7 @@ import java.util.*
 
 class BLEGattServer : Service() {
     private val mBinder = LocalBinder()//Binder for Activity that binds to this Service
-  private  val bluetoothAdapter: BluetoothAdapter by lazy {
+     val bluetoothAdapter: BluetoothAdapter by lazy {
         bluetoothManager.adapter
     }
 

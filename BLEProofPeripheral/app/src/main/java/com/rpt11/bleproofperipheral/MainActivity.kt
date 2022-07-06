@@ -387,8 +387,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
-    private var permissionResultHandlers =
-        mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
+    private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
