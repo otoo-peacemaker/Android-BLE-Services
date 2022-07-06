@@ -7,28 +7,12 @@ import android.os.ParcelUuid
 import android.util.Log
 import com.rpt11.bleproofperipheral.util.Constants
 import com.rpt11.bleproofperipheral.util.Constants.SERVICE_UUID
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.*
 
 object BLEAdvertiser {
 
     //checking advertising status
-    private var isAdvertising = false
-        set(value) {
-            field = value
-            // update visual state of the switch
-           /* runBlocking {
-                launch(Dispatchers.IO) {
-                    if (value != binding.switchAdvertising.isChecked)
-                        binding.switchAdvertising.isChecked = value
-                }
-                delay(200)
-            }*/
-        }
-
+    private var isAdvertising = true
 
     //The AdvertiseSettings provide a way to adjust advertising preferences for each Bluetooth LE advertisement
     private val advertiseSettings = AdvertiseSettings.Builder()
@@ -67,7 +51,7 @@ object BLEAdvertiser {
                 "Advertiser",
                 "Advertise start failed: errorCode=$errorCode $desc"
             )
-           // appendLog("Advertise start failed: errorCode=$errorCode $desc")
+            // appendLog("Advertise start failed: errorCode=$errorCode $desc")
             isAdvertising = false
         }
     }

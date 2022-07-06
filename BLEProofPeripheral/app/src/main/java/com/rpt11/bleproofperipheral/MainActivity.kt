@@ -26,6 +26,7 @@ import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_WRITE_UUID
 import com.rpt11.bleproofperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
 import com.rpt11.bleproofperipheral.util.Constants.SERVICE_UUID
 import com.rpt11.bleproofperipheral.databinding.ActivityMainBinding
+import com.rpt11.bleproofperipheral.util.AskType
 import com.rpt11.bleproofperipheral.util.Constants
 import com.rpt11.bleproofperipheral.util.hasPermissions
 import com.rpt11.bleproofperipheral.util.requestPermissionArray
@@ -379,12 +380,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
     //endregion
-
-    //region Permissions and Settings management
-    enum class AskType {
-        AskOnce,
-        InsistUntilSuccess
-    }
 
     private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
     private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()

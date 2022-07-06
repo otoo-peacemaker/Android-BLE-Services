@@ -133,6 +133,7 @@ private fun Activity.enableBluetooth(askType: AskType, completion: (Boolean) -> 
     private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
     private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
 
+
  //region Permissions and Settings management
     enum class AskType {
         AskOnce,
