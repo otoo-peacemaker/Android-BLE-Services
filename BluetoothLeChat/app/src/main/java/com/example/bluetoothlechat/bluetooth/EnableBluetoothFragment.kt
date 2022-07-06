@@ -28,6 +28,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.bluetoothlechat.R
 import com.example.bluetoothlechat.databinding.FragmentEnableBluetoothBinding
 
+@Suppress("DEPRECATION")
 class EnableBluetoothFragment : Fragment() {
 
     private var _binding: FragmentEnableBluetoothBinding? = null
@@ -51,7 +52,7 @@ class EnableBluetoothFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentEnableBluetoothBinding.inflate(inflater, container, false)
 
         binding.errorAction.setOnClickListener {

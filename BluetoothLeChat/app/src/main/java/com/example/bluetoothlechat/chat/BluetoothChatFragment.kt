@@ -31,8 +31,8 @@ import com.example.bluetoothlechat.bluetooth.Message
 import com.example.bluetoothlechat.R
 import com.example.bluetoothlechat.bluetooth.ChatServer
 import com.example.bluetoothlechat.databinding.FragmentBluetoothChatBinding
-import com.example.bluetoothlechat.gone
-import com.example.bluetoothlechat.visible
+import com.example.bluetoothlechat.util.gone
+import com.example.bluetoothlechat.util.visible
 
 private const val TAG = "BluetoothChatFragment"
 
@@ -57,6 +57,8 @@ class BluetoothChatFragment : Fragment() {
 
     }
 
+    private val adapter = MessageAdapter()
+
     private val connectionRequestObserver = Observer<BluetoothDevice> { device ->
         Log.d(TAG, "Connection request observer: have device $device")
         ChatServer.setCurrentChatConnection(device)
@@ -67,7 +69,7 @@ class BluetoothChatFragment : Fragment() {
         adapter.addMessage(message)
     }
 
-    private val adapter = MessageAdapter()
+
 
     private val inputMethodManager by lazy {
         requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -77,7 +79,7 @@ class BluetoothChatFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentBluetoothChatBinding.inflate(inflater, container, false)
 
         Log.d(TAG, "chatWith: set adapter $adapter")
@@ -117,6 +119,7 @@ class BluetoothChatFragment : Fragment() {
             // only send message if it is not empty
             if (message.isNotEmpty()) {
                 ChatServer.sendMessage(message)
+               // adapter.addMessage(message)
                 // clear message
                 binding.messageText.setText("")
             }

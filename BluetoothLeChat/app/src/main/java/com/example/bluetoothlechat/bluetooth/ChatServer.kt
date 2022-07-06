@@ -29,6 +29,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.bluetoothlechat.bluetooth.Message.RemoteMessage
 import com.example.bluetoothlechat.chat.DeviceConnectionState
+import kotlinx.coroutines.runBlocking
+import java.util.*
 
 private const val TAG = "ChatServer"
 
@@ -37,14 +39,17 @@ object ChatServer {
     // hold reference to app context to run the chat server
     private var app: Application? = null
     private lateinit var bluetoothManager: BluetoothManager
-    // BluetoothAdapter should never be null if the app is installed from the Play store
-    // since BLE is required per the <uses-feature> tag in the AndroidManifest.xml.
-    // If the app is installed on an emulator without bluetooth then the app will crash
-    // on launch since installing via Android Studio bypasses the <uses-feature> flags
+
+    /**
+     *  BluetoothAdapter should never be null if the app is installed from the Play store
+     *  since BLE is required per the <uses-feature> tag in the AndroidManifest.xml.
+     *  If the app is installed on an emulator without bluetooth then the app will crash
+     *  on launch since installing via Android Studio bypasses the <uses-feature> flags*/
     private val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
-    // This property will be null if bluetooth is not enabled or if advertising is not
-    // possible on the device
+    /**
+     * This property will be null if bluetooth is not enabled or if advertising is not
+     * possible on the device*/
     private var advertiser: BluetoothLeAdvertiser? = null
     private var advertiseCallback: AdvertiseCallback? = null
     private var advertiseSettings: AdvertiseSettings = buildAdvertiseSettings()
@@ -53,6 +58,11 @@ object ChatServer {
     // LiveData for reporting the messages sent to the device
     private val _messages = MutableLiveData<Message>()
     val messages = _messages as LiveData<Message>
+
+    private val _readResponse = MutableLiveData<String>()
+    val readResponse = _readResponse as LiveData<String>
+
+    private val subscribedDevices = mutableSetOf<BluetoothDevice>()
 
     // LiveData for reporting connection requests
     private val _connectionRequest = MutableLiveData<BluetoothDevice>()
@@ -115,7 +125,7 @@ object ChatServer {
     }
 
     fun sendMessage(message: String): Boolean {
-        Log.d(TAG, "Send a message")
+        Log.d(TAG, "message: $message")
         messageCharacteristic?.let { characteristic ->
             characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
 
@@ -133,6 +143,8 @@ object ChatServer {
         }
         return false
     }
+
+    fun updateSubscribersUI() = "${subscribedDevices.count()} subscribers"
 
     /**
      * Function to setup a local GATT server.
@@ -210,14 +222,14 @@ object ChatServer {
          * Attempting to send packets over this limit will result in a failure with error code
          * AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE. Catch this error in the
          * onStartFailure() method of an AdvertiseCallback implementation.
+         *
+         * For example if setIncludeDeviceName is set to false - this will cause advertising to fail (exceeds size limit)
+         * String failureData = "asdghkajsghalkxcjhfa;sghtalksjcfhalskfjhasldkjfhdskf";
+         * dataBuilder.addServiceData(Constants.Service_UUID, failureData.getBytes());
          */
         val dataBuilder = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(SERVICE_UUID))
             .setIncludeDeviceName(true)
-
-        /* For example - this will cause advertising to fail (exceeds size limit) */
-        //String failureData = "asdghkajsghalkxcjhfa;sghtalksjcfhalskfjhasldkjfhdskf";
-        //dataBuilder.addServiceData(Constants.Service_UUID, failureData.getBytes());
         return dataBuilder.build()
     }
 
@@ -250,7 +262,9 @@ object ChatServer {
                 _deviceConnection.postValue(DeviceConnectionState.Disconnected)
             }
         }
-
+        override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
+            Log.d("status","onNotification: $status")
+        }
         override fun onCharacteristicWriteRequest(
             device: BluetoothDevice,
             requestId: Int,
@@ -258,8 +272,7 @@ object ChatServer {
             preparedWrite: Boolean,
             responseNeeded: Boolean,
             offset: Int,
-            value: ByteArray?
-        ) {
+            value: ByteArray?) {
             super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value)
             if (characteristic.uuid == MESSAGE_UUID) {
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
@@ -270,6 +283,102 @@ object ChatServer {
                 }
             }
         }
+
+        override fun onCharacteristicReadRequest(device: BluetoothDevice?, requestId: Int, offset: Int, characteristic: BluetoothGattCharacteristic?) {
+            super.onCharacteristicReadRequest(device, requestId, offset, characteristic)
+            var log = "onCharacteristicRead offset=$offset"
+
+            if (characteristic?.uuid == UUID.fromString(CHAR_FOR_READ_UUID)) {
+                runBlocking {
+                    gattServer?.sendResponse(
+                        device,
+                        requestId,
+                        BluetoothGatt.GATT_SUCCESS,
+                        0,
+                        _readResponse.value?.toByteArray(Charsets.UTF_8)
+                    )
+                    log += "\nresponse=success, value=\"${_readResponse.value}\""
+                    Log.d("READ", "RESPONSE: $log")
+                }
+            } else {
+                gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                log += "\nresponse=failure, unknown UUID\n${characteristic?.uuid}"
+                Log.d("READ", "RESPONSE: $log")
+            }
+        }
+
+          @SuppressLint("MissingPermission")
+        override fun onDescriptorReadRequest(
+            device: BluetoothDevice,
+            requestId: Int,
+            offset: Int,
+            descriptor: BluetoothGattDescriptor
+        ) {
+            var log = "onDescriptorReadRequest"
+            if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
+                val returnValue = if (subscribedDevices.contains(device)) {
+                    log += " CCCD response=ENABLE_NOTIFICATION"
+                    BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                } else {
+                    log += " CCCD response=DISABLE_NOTIFICATION"
+                    BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+                }
+                gattServer?.sendResponse(
+                    device,
+                    requestId,
+                    BluetoothGatt.GATT_SUCCESS,
+                    0,
+                    returnValue
+                )
+            } else {
+                log += " unknown uuid=${descriptor.uuid}"
+                gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+            }
+           Log.d("DESCRIPTOR","onReadRequest $log")
+        }
+
+        @SuppressLint("MissingPermission")
+        override fun onDescriptorWriteRequest(
+            device: BluetoothDevice,
+            requestId: Int,
+            descriptor: BluetoothGattDescriptor,
+            preparedWrite: Boolean,
+            responseNeeded: Boolean,
+            offset: Int,
+            value: ByteArray
+        ) {
+            var strLog = "onDescriptorWriteRequest"
+            if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
+                var status = BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED
+                if (descriptor.characteristic.uuid == UUID.fromString(CHAR_FOR_INDICATE_UUID)) {
+                    if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)) {
+                        subscribedDevices.add(device)
+                        status = BluetoothGatt.GATT_SUCCESS
+                        strLog += ", subscribed"
+                    } else if (Arrays.equals(
+                            value,
+                            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+                        )
+                    ) {
+                        subscribedDevices.remove(device)
+                        status = BluetoothGatt.GATT_SUCCESS
+                        strLog += ", unsubscribed"
+                    }
+                }
+                if (responseNeeded) {
+                    gattServer?.sendResponse(device, requestId, status, 0, null)
+                }
+                updateSubscribersUI()
+            } else {
+                strLog += " unknown uuid=${descriptor.uuid}"
+                if (responseNeeded) {
+                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                }
+            }
+           Log.d("DESCRIPTOR","onWriteRequest $strLog")
+        }
+
+
     }
 
     private class GattClientCallback : BluetoothGattCallback() {
@@ -277,7 +386,10 @@ object ChatServer {
             super.onConnectionStateChange(gatt, status, newState)
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
-            Log.d(TAG, "onConnectionStateChange: Client $gatt  success: $isSuccess connected: $isConnected")
+            Log.d(
+                TAG,
+                "onConnectionStateChange: Client $gatt  success: $isSuccess connected: $isConnected"
+            )
             // try to send a message to the other device as a test
             if (isSuccess && isConnected) {
                 // discover services
@@ -314,4 +426,6 @@ object ChatServer {
             Log.d(TAG, "Advertising successfully started")
         }
     }
+
+
 }

@@ -15,6 +15,7 @@
  */
 
 package com.example.bluetoothlechat.bluetooth
+
 import java.util.*
 
 /**
@@ -34,9 +35,14 @@ val SERVICE_UUID: UUID = UUID.fromString("0000b81d-0000-1000-8000-00805f9b34fb")
  */
 val MESSAGE_UUID: UUID = UUID.fromString("7db3e235-3608-41f3-a03c-955fcbd2ea4b")
 
+const val CHAR_FOR_READ_UUID = "25AE1442-05D3-4C5B-8281-93D4E07420CF"
+const val CHAR_FOR_WRITE_UUID = "25AE1443-05D3-4C5B-8281-93D4E07420CF"
+
 /**
  * UUID to confirm device connection
  */
 val CONFIRM_UUID: UUID = UUID.fromString("36d4dc5c-814b-4097-a5a6-b93b39085928")
+const val CCC_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb"
+const val CHAR_FOR_INDICATE_UUID = "25AE1444-05D3-4C5B-8281-93D4E07420CF"
 
 const val REQUEST_ENABLE_BT = 1

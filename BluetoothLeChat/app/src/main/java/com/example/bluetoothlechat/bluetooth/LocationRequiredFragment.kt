@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("DEPRECATION")
+
 package com.example.bluetoothlechat.bluetooth
 
 import android.Manifest
@@ -31,9 +33,10 @@ import com.example.bluetoothlechat.databinding.FragmentLocationRequiredBinding
 private const val TAG = "LocationRequiredFrag"
 private const val LOCATION_REQUEST_CODE = 0
 
-// Fragment responsible for checking if the app has the ACCESS_FINE_LOCATION permission.
-// This permission is required when using the BLE APIs so the user must grant permission
-// to the app before viewing the BluetoothChatFragment or DeviceListFragment
+/**
+ * Fragment responsible for checking if the app has the ACCESS_FINE_LOCATION permission.
+ * This permission is required when using the BLE APIs so the user must grant permission
+ * to the app before viewing the BluetoothChatFragment or DeviceListFragment*/
 class LocationRequiredFragment : Fragment() {
 
     private var _binding: FragmentLocationRequiredBinding? = null
@@ -44,7 +47,7 @@ class LocationRequiredFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentLocationRequiredBinding.inflate(inflater, container, false)
 
         // hide the error messages while checking the permissions
@@ -64,6 +67,7 @@ class LocationRequiredFragment : Fragment() {
         checkLocationPermission()
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,

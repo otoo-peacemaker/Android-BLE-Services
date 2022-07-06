@@ -29,10 +29,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bluetoothlechat.R
 import com.example.bluetoothlechat.bluetooth.ChatServer
 import com.example.bluetoothlechat.databinding.FragmentDeviceScanBinding
-import com.example.bluetoothlechat.exhaustive
-import com.example.bluetoothlechat.gone
+import com.example.bluetoothlechat.util.exhaustive
+import com.example.bluetoothlechat.util.gone
 import com.example.bluetoothlechat.scan.DeviceScanViewState.*
-import com.example.bluetoothlechat.visible
+import com.example.bluetoothlechat.util.visible
 
 private const val TAG = "DeviceScanFragment"
 const val GATT_KEY = "gatt_bundle_key"

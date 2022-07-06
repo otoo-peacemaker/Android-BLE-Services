@@ -15,12 +15,15 @@
  */
 package com.example.bluetoothlechat.chat
 
+import android.annotation.SuppressLint
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bluetoothlechat.bluetooth.Message
 import com.example.bluetoothlechat.R
+import com.example.bluetoothlechat.chat.viewtype.LocalMessageViewHolder
+import com.example.bluetoothlechat.chat.viewtype.RemoteMessageViewHolder
 import java.lang.IllegalArgumentException
 
 private const val TAG = "MessageAdapter"
@@ -50,8 +53,7 @@ class MessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         Log.d(TAG, "onBindViewHolder: ")
-        val message = messages[position]
-        when(message) {
+        when(val message = messages[position]) {
             is Message.RemoteMessage -> {
                 (holder as RemoteMessageViewHolder).bind(message)
             }
@@ -75,6 +77,7 @@ class MessageAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     // Add messages to the top of the list so they're easy to see
+    @SuppressLint("NotifyDataSetChanged")
     fun addMessage(message: Message) {
         Log.d(TAG, "addMessage: ")
         messages.add(0, message)
