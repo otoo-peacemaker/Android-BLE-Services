@@ -26,6 +26,9 @@ import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_WRITE_UUID
 import com.rpt11.bleproofperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
 import com.rpt11.bleproofperipheral.util.Constants.SERVICE_UUID
 import com.rpt11.bleproofperipheral.databinding.ActivityMainBinding
+import com.rpt11.bleproofperipheral.services.BLEAdvertiser.advertiseCallback
+import com.rpt11.bleproofperipheral.services.BLEAdvertiser.advertiseData
+import com.rpt11.bleproofperipheral.services.BLEAdvertiser.advertiseSettings
 import com.rpt11.bleproofperipheral.util.AskType
 import com.rpt11.bleproofperipheral.util.Constants
 import com.rpt11.bleproofperipheral.util.hasPermissions
@@ -175,23 +178,23 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    //The AdvertiseSettings provide a way to adjust advertising preferences for each Bluetooth LE advertisement
+    /*//The AdvertiseSettings provide a way to adjust advertising preferences for each Bluetooth LE advertisement
     private val advertiseSettings = AdvertiseSettings.Builder()
         .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
         .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
         .setConnectable(true)
         .build()
 
-    /**Advertise data packet container for Bluetooth LE advertising.
+    *//**Advertise data packet container for Bluetooth LE advertising.
      * This represents the data to be advertised as well as the scan response data for active scans
-     * Don't include name, because if name size > 8 bytes, ADVERTISE_FAILED_DATA_TOO_LARGE*/
+     * Don't include name, because if name size > 8 bytes, ADVERTISE_FAILED_DATA_TOO_LARGE*//*
     private val advertiseData = AdvertiseData.Builder()
         .setIncludeDeviceName(true)
         .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
         .build()
 
-   /*Bluetooth LE advertising callbacks, used to deliver advertising operation status
-   on success and on failure*/
+   *//*Bluetooth LE advertising callbacks, used to deliver advertising operation status
+   on success and on failure*//*
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
             appendLog("Advertise start success\n$SERVICE_UUID")
@@ -209,7 +212,7 @@ class MainActivity : AppCompatActivity() {
             appendLog("Advertise start failed: errorCode=$errorCode $desc")
             isAdvertising = false
         }
-    }
+    }*/
     //endregion
 
     //region BLE GATT server
