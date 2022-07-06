@@ -29,10 +29,7 @@ import com.rpt11.bleproofperipheral.databinding.ActivityMainBinding
 import com.rpt11.bleproofperipheral.services.BLEAdvertiser.advertiseCallback
 import com.rpt11.bleproofperipheral.services.BLEAdvertiser.advertiseData
 import com.rpt11.bleproofperipheral.services.BLEAdvertiser.advertiseSettings
-import com.rpt11.bleproofperipheral.util.AskType
-import com.rpt11.bleproofperipheral.util.Constants
-import com.rpt11.bleproofperipheral.util.hasPermissions
-import com.rpt11.bleproofperipheral.util.requestPermissionArray
+import com.rpt11.bleproofperipheral.util.*
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -384,8 +381,8 @@ class MainActivity : AppCompatActivity() {
     }
     //endregion
 
-    private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
-    private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
+  /*  private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
+    private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()*/
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -400,8 +397,7 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+        grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionResultHandlers[requestCode]?.let { handler ->
             handler(permissions, grantResults)
@@ -410,7 +406,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun ensureBluetoothCanBeUsed(completion: (Boolean, String) -> Unit) {
+    /*private fun ensureBluetoothCanBeUsed(completion: (Boolean, String) -> Unit) {
         grantBluetoothPeripheralPermissions(AskType.AskOnce) { isGranted ->
             if (!isGranted) {
                 completion(false, "Bluetooth permissions denied")
@@ -426,9 +422,9 @@ class MainActivity : AppCompatActivity() {
                 completion(true, "BLE ready for use")
             }
         }
-    }
+    }*/
 
-    @SuppressLint("MissingPermission")
+   /* @SuppressLint("MissingPermission")
     private fun enableBluetooth(askType: AskType, completion: (Boolean) -> Unit) {
         if (bluetoothAdapter.isEnabled) {
             completion(true)
@@ -472,7 +468,7 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 val requestCode = BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
                 // set permission result handler
-                permissionResultHandlers[requestCode] = { _ /*permissions*/, grantResults ->
+                permissionResultHandlers[requestCode] = { _ *//*permissions*//*, grantResults ->
                     val isSuccess = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
                     if (isSuccess || askType != AskType.InsistUntilSuccess) {
                         permissionResultHandlers.remove(requestCode)
@@ -485,7 +481,7 @@ class MainActivity : AppCompatActivity() {
                 requestPermissionArray(wantedPermissions, requestCode)
             }
         }
-    }
+    }*/
 
     //endregion
 

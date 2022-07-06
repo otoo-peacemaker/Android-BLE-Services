@@ -13,7 +13,6 @@ import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
-import com.rpt11.bleproofperipheral.MainActivity
 import com.rpt11.bleproofperipheral.R
 import com.rpt11.bleproofperipheral.services.BLEGattServer
 import com.rpt11.bleproofperipheral.util.Constants.BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
@@ -54,88 +53,88 @@ fun Activity.requestPermissionArray(permissions: Array<String>, requestCode: Int
     ActivityCompat.requestPermissions(this, permissions, requestCode)
 }
 
-  fun Activity.ensureBluetoothCanBeUsed(completion: (Boolean, String) -> Unit) {
-        grantBluetoothPeripheralPermissions(AskType.AskOnce) { isGranted ->
-            if (!isGranted) {
-                completion(false, "Bluetooth permissions denied")
-                return@grantBluetoothPeripheralPermissions
+fun Activity.ensureBluetoothCanBeUsed(completion: (Boolean, String) -> Unit) {
+    grantBluetoothPeripheralPermissions(AskType.AskOnce) { isGranted ->
+        if (!isGranted) {
+            completion(false, "Bluetooth permissions denied")
+            return@grantBluetoothPeripheralPermissions
+        }
+
+        enableBluetooth(AskType.AskOnce) { isEnabled ->
+            if (!isEnabled) {
+                completion(false, "Bluetooth OFF")
+                return@enableBluetooth
             }
 
-            enableBluetooth(AskType.AskOnce) { isEnabled ->
-                if (!isEnabled) {
-                    completion(false, "Bluetooth OFF")
-                    return@enableBluetooth
-                }
-
-                completion(true, "BLE ready for use")
-            }
+            completion(true, "BLE ready for use")
         }
     }
+}
 
-  fun Activity.grantBluetoothPeripheralPermissions(askType: AskType, completion: (Boolean) -> Unit) {
-        val wantedPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-            )
-        } else {
-            emptyArray()
-        }
+fun Activity.grantBluetoothPeripheralPermissions(askType: AskType, completion: (Boolean) -> Unit) {
+    val wantedPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        arrayOf(
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH_ADVERTISE,
+        )
+    } else {
+        emptyArray()
+    }
 
-        if (wantedPermissions.isEmpty() || hasPermissions(wantedPermissions)) {
-            completion(true)
-        } else {
-            runOnUiThread {
-                val requestCode = BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
-                // set permission result handler
-                permissionResultHandlers[requestCode] = { _ /*permissions*/, grantResults ->
-                    val isSuccess = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-                    if (isSuccess || askType != AskType.InsistUntilSuccess) {
-                        permissionResultHandlers.remove(requestCode)
-                        completion(isSuccess)
-                    } else {
-                        // request again
-                        requestPermissionArray(wantedPermissions, requestCode)
-                    }
+    if (wantedPermissions.isEmpty() || hasPermissions(wantedPermissions)) {
+        completion(true)
+    } else {
+        runOnUiThread {
+            val requestCode = BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
+            // set permission result handler
+            permissionResultHandlers[requestCode] = { _ /*permissions*/, grantResults ->
+                val isSuccess = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+                if (isSuccess || askType != AskType.InsistUntilSuccess) {
+                    permissionResultHandlers.remove(requestCode)
+                    completion(isSuccess)
+                } else {
+                    // request again
+                    requestPermissionArray(wantedPermissions, requestCode)
                 }
-                requestPermissionArray(wantedPermissions, requestCode)
             }
+            requestPermissionArray(wantedPermissions, requestCode)
         }
     }
+}
 
 @SuppressLint("MissingPermission")
 private fun Activity.enableBluetooth(askType: AskType, completion: (Boolean) -> Unit) {
     val gattServer: BLEGattServer by lazy { BLEGattServer() }
     val bluetoothAdapter = gattServer.bluetoothAdapter
-        if (bluetoothAdapter.isEnabled) {
-            completion(true)
-        } else {
-            val intentString = BluetoothAdapter.ACTION_REQUEST_ENABLE
-            val requestCode = ENABLE_BLUETOOTH_REQUEST_CODE
+    if (bluetoothAdapter.isEnabled) {
+        completion(true)
+    } else {
+        val intentString = BluetoothAdapter.ACTION_REQUEST_ENABLE
+        val requestCode = ENABLE_BLUETOOTH_REQUEST_CODE
 
-            // set activity result handler
-            activityResultHandlers[requestCode] = { result ->
-                Unit
-                val isSuccess = result == Activity.RESULT_OK
-                if (isSuccess || askType != AskType.InsistUntilSuccess) {
-                    activityResultHandlers.remove(requestCode)
-                    completion(isSuccess)
-                } else {
-                    // start activity for the request again
-                    startActivityForResult(Intent(intentString), requestCode)
-                }
+        // set activity result handler
+        activityResultHandlers[requestCode] = { result ->
+            Unit
+            val isSuccess = result == Activity.RESULT_OK
+            if (isSuccess || askType != AskType.InsistUntilSuccess) {
+                activityResultHandlers.remove(requestCode)
+                completion(isSuccess)
+            } else {
+                // start activity for the request again
+                startActivityForResult(Intent(intentString), requestCode)
             }
-            // start activity for the request
-            startActivityForResult(Intent(intentString), requestCode)
         }
+        // start activity for the request
+        startActivityForResult(Intent(intentString), requestCode)
     }
+}
 
-    private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
-    private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
+var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
+var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
 
 
- //region Permissions and Settings management
-    enum class AskType {
-        AskOnce,
-        InsistUntilSuccess
-    }
+//region Permissions and Settings management
+enum class AskType {
+    AskOnce,
+    InsistUntilSuccess
+}
