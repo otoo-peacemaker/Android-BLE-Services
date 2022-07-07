@@ -15,6 +15,7 @@
  */
 package com.example.bluetoothlechat.util
 
+import android.bluetooth.BluetoothGattCharacteristic
 import android.view.View
 
 fun View.visible() {
@@ -27,3 +28,31 @@ fun View.gone() {
 
 val <T> T.exhaustive: T
     get() = this
+
+
+fun ByteArray.toHexString(): String =
+    joinToString(separator = " ", prefix = "0x") { String.format("%02X", it) }
+
+/**
+ * Before we can perform read or write operations on a BluetoothGattCharacteristic,
+ * we need to make sure they’re readable or writable. Otherwise,
+ * the operation would fail with a GATT_READ_NOT_PERMITTED or GATT_WRITE_NOT_PERMITTED
+ * error (both constants being part of BluetoothGatt).
+ * */
+fun BluetoothGattCharacteristic.isReadable(): Boolean =
+    containsProperty(BluetoothGattCharacteristic.PROPERTY_READ)
+
+fun BluetoothGattCharacteristic.isWritable(): Boolean =
+    containsProperty(BluetoothGattCharacteristic.PROPERTY_WRITE)
+
+fun BluetoothGattCharacteristic.isWritableWithoutResponse(): Boolean =
+    containsProperty(BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)
+
+fun BluetoothGattCharacteristic.containsProperty(property: Int): Boolean {
+    return properties and property != 0
+}
+
+
+//https://punchthrough.com/android-ble-guide/
+//https://developer.android.com/guide/topics/connectivity/bluetooth/ble-overview
+//https://www.bluetooth.com/specifications/assigned-numbers/

@@ -29,6 +29,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.bluetoothlechat.bluetooth.Message.RemoteMessage
 import com.example.bluetoothlechat.chat.DeviceConnectionState
+import com.example.bluetoothlechat.util.isReadable
+import com.example.bluetoothlechat.util.toHexString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
@@ -60,7 +64,7 @@ object ChatServer {
     val messages = _messages as LiveData<Message>
 
     private val _readResponse = MutableLiveData<String>()
-    val readResponse = _readResponse as LiveData<String>
+    var readResponse = _readResponse as LiveData<String>
 
     private val subscribedDevices = mutableSetOf<BluetoothDevice>()
 
@@ -71,6 +75,10 @@ object ChatServer {
     // LiveData for reporting the messages sent to the device
     private val _requestEnableBluetooth = MutableLiveData<Boolean>()
     val requestEnableBluetooth = _requestEnableBluetooth as LiveData<Boolean>
+
+    /**make sure the data we’re sending or receiving will fit well inside the connection’s
+     * ATT Maximum Transmission Unit (MTU).*/
+    private const val GATT_MAX_MTU_SIZE = 512
 
     private var gattServer: BluetoothGattServer? = null
     private var gattServerCallback: BluetoothGattServerCallback? = null
@@ -257,24 +265,16 @@ object ChatServer {
             )
             if (isSuccess && isConnected) {
                 _connectionRequest.postValue(device)
-               //checking for battery life
-                messageCharacteristic?.let {
-                    val batteryInfo = messageCharacteristic!!.value[0].toInt()
-                    Log.d(TAG,"battery life $batteryInfo")
-                }
-
             } else {
                 _deviceConnection.postValue(DeviceConnectionState.Disconnected)
             }
-
-
         }
-
 
 
         override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
-            Log.d("status","onNotification: $status")
+            Log.d("status", "onNotification: $status")
         }
+
         override fun onCharacteristicWriteRequest(
             device: BluetoothDevice,
             requestId: Int,
@@ -282,8 +282,17 @@ object ChatServer {
             preparedWrite: Boolean,
             responseNeeded: Boolean,
             offset: Int,
-            value: ByteArray?) {
-            super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value)
+            value: ByteArray?
+        ) {
+            super.onCharacteristicWriteRequest(
+                device,
+                requestId,
+                characteristic,
+                preparedWrite,
+                responseNeeded,
+                offset,
+                value
+            )
             if (characteristic.uuid == MESSAGE_UUID) {
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
                 val message = value?.toString(Charsets.UTF_8)
@@ -294,14 +303,27 @@ object ChatServer {
             }
         }
 
-        override fun onCharacteristicReadRequest(device: BluetoothDevice?, requestId: Int, offset: Int, characteristic: BluetoothGattCharacteristic?) {
+        override fun onCharacteristicReadRequest(
+            device: BluetoothDevice?,
+            requestId: Int,
+            offset: Int,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
             var log = "onCharacteristicRead offset=$offset"
+
+            if (characteristic?.uuid == MESSAGE_UUID) {
+                gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                val message = characteristic.value?.toString(Charsets.UTF_8)
+                Log.d(TAG, "onCharacteristicReadRequest: Send message: \"$message\"")
+                message?.let {
+                    _messages.postValue(Message.LocalMessage(it))
+                }
+            }
+
             if (characteristic?.uuid == UUID.fromString(CHAR_FOR_READ_UUID)) {
                 runBlocking {
                     gattServer?.sendResponse(
-                        device,
-                        requestId,
-                        BluetoothGatt.GATT_SUCCESS,
+                        device, requestId, BluetoothGatt.GATT_SUCCESS,
                         0,
                         _readResponse.value?.toByteArray(Charsets.UTF_8)
                     )
@@ -315,7 +337,7 @@ object ChatServer {
             }
         }
 
-          @SuppressLint("MissingPermission")
+        @SuppressLint("MissingPermission")
         override fun onDescriptorReadRequest(
             device: BluetoothDevice,
             requestId: Int,
@@ -342,7 +364,7 @@ object ChatServer {
                 log += " unknown uuid=${descriptor.uuid}"
                 gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
             }
-           Log.d("DESCRIPTOR","onReadRequest $log")
+            Log.d("DESCRIPTOR", "onReadRequest $log")
         }
 
         @SuppressLint("MissingPermission")
@@ -364,8 +386,7 @@ object ChatServer {
                         status = BluetoothGatt.GATT_SUCCESS
                         strLog += ", subscribed"
                     } else if (Arrays.equals(
-                            value,
-                            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+                            value, BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
                         )
                     ) {
                         subscribedDevices.remove(device)
@@ -383,11 +404,8 @@ object ChatServer {
                     gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
                 }
             }
-           Log.d("DESCRIPTOR","onWriteRequest $strLog")
+            Log.d("DESCRIPTOR", "onWriteRequest $strLog")
         }
-
-
-
     }
 
     private class GattClientCallback : BluetoothGattCallback() {
@@ -395,6 +413,7 @@ object ChatServer {
             super.onConnectionStateChange(gatt, status, newState)
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
+            gatt.requestMtu(GATT_MAX_MTU_SIZE)
             Log.d(
                 TAG,
                 "onConnectionStateChange: Client $gatt  success: $isSuccess connected: $isConnected"
@@ -402,7 +421,17 @@ object ChatServer {
             // try to send a message to the other device as a test
             if (isSuccess && isConnected) {
                 // discover services
-                gatt.discoverServices()
+                 gatt.discoverServices()
+               /* Log.d("WRITE::::::", "::::::::::::::::${gatt.writeCharacteristic(messageCharacteristic)}")
+                runBlocking {
+                    launch(Dispatchers.Main) {
+                      //  gatt.discoverServices()
+                        gatt.readCharacteristic(messageCharacteristic)
+                        gatt.writeCharacteristic(messageCharacteristic)
+                        Log.d("READ::::::", ":::::::::::::::::${gatt.readCharacteristic(messageCharacteristic)}")
+                        Log.d("WRITE::::::", "::::::::::::::::${gatt.writeCharacteristic(messageCharacteristic)}")
+                    }
+                }*/
             }
         }
 
@@ -413,6 +442,44 @@ object ChatServer {
                 gatt = discoveredGatt
                 val service = discoveredGatt.getService(SERVICE_UUID)
                 messageCharacteristic = service.getCharacteristic(MESSAGE_UUID)
+            }
+        }
+
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            val value = characteristic?.value.toString()
+            //  val message = value?.toString(Charsets.UTF_8)
+            Log.d(TAG, "onCharacteristicWriteRequest: Send message: \"$value\"")
+            value.let {
+                _messages.postValue(Message.LocalMessage(it))
+            }
+        }
+
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicWrite(gatt, characteristic, status)
+            Log.d(TAG, "Characteristic " + characteristic?.uuid + " written")
+        }
+
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            Log.d("Transmission Unit", "success: ${status == BluetoothGatt.GATT_SUCCESS}")
+        }
+
+
+        //Reading the battery level
+        private fun readBatteryLevel() {
+            val batteryServiceUuid = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
+            val batteryLevelCharUuid = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
+            val batteryLevelChar =
+                gatt?.getService(batteryServiceUuid)?.getCharacteristic(batteryLevelCharUuid)
+            if (batteryLevelChar?.isReadable() == true) {
+                gatt?.readCharacteristic(batteryLevelChar)
             }
         }
     }
@@ -426,7 +493,7 @@ object ChatServer {
             super.onStartFailure(errorCode)
             // Send error state to display
             val errorMessage = "Advertise failed with error: $errorCode"
-            Log.d(TAG, "Advertising failed")
+            Log.d(TAG, "Advertising failed $errorMessage")
             //_viewState.value = DeviceScanViewState.Error(errorMessage)
         }
 

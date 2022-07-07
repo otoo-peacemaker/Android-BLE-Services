@@ -119,7 +119,7 @@ class BluetoothChatFragment : Fragment() {
             // only send message if it is not empty
             if (message.isNotEmpty()) {
                 ChatServer.sendMessage(message)
-               // adapter.addMessage(message)
+                adapter.addMessage(Message.LocalMessage(message))
                 // clear message
                 binding.messageText.setText("")
             }
