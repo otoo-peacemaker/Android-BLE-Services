@@ -249,7 +249,6 @@ object ChatServer {
      */
     private class GattServerCallback : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
-            super.onConnectionStateChange(device, status, newState)
             val isSuccess = status == BluetoothGatt.GATT_SUCCESS
             val isConnected = newState == BluetoothProfile.STATE_CONNECTED
             Log.d(
@@ -258,10 +257,21 @@ object ChatServer {
             )
             if (isSuccess && isConnected) {
                 _connectionRequest.postValue(device)
+               //checking for battery life
+                messageCharacteristic?.let {
+                    val batteryInfo = messageCharacteristic!!.value[0].toInt()
+                    Log.d(TAG,"battery life $batteryInfo")
+                }
+
             } else {
                 _deviceConnection.postValue(DeviceConnectionState.Disconnected)
             }
+
+
         }
+
+
+
         override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
             Log.d("status","onNotification: $status")
         }
@@ -285,9 +295,7 @@ object ChatServer {
         }
 
         override fun onCharacteristicReadRequest(device: BluetoothDevice?, requestId: Int, offset: Int, characteristic: BluetoothGattCharacteristic?) {
-            super.onCharacteristicReadRequest(device, requestId, offset, characteristic)
             var log = "onCharacteristicRead offset=$offset"
-
             if (characteristic?.uuid == UUID.fromString(CHAR_FOR_READ_UUID)) {
                 runBlocking {
                     gattServer?.sendResponse(
@@ -377,6 +385,7 @@ object ChatServer {
             }
            Log.d("DESCRIPTOR","onWriteRequest $strLog")
         }
+
 
 
     }

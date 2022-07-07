@@ -61,6 +61,8 @@ class BluetoothChatFragment : Fragment() {
 
     private val connectionRequestObserver = Observer<BluetoothDevice> { device ->
         Log.d(TAG, "Connection request observer: have device $device")
+        Log.d(TAG, "Connection request observer: have device ${device.address}")
+
         ChatServer.setCurrentChatConnection(device)
     }
 
@@ -68,8 +70,6 @@ class BluetoothChatFragment : Fragment() {
         Log.d(TAG, "Have message ${message.text}")
         adapter.addMessage(message)
     }
-
-
 
     private val inputMethodManager by lazy {
         requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
