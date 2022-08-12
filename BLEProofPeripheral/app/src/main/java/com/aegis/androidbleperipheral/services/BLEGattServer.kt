@@ -1,4 +1,4 @@
-package com.rpt11.bleproofperipheral.services
+package com.aegis.androidbleperipheral.services
 
 import android.annotation.SuppressLint
 import android.app.Service
@@ -8,11 +8,11 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
-import com.rpt11.bleproofperipheral.util.Constants.CCC_DESCRIPTOR_UUID
-import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_INDICATE_UUID
-import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_READ_UUID
-import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_WRITE_UUID
-import com.rpt11.bleproofperipheral.util.Constants.SERVICE_UUID
+import com.aegis.androidbleperipheral.util.Constants.CCC_DESCRIPTOR_UUID
+import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_INDICATE_UUID
+import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_READ_UUID
+import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_WRITE_UUID
+import com.aegis.androidbleperipheral.util.Constants.SERVICE_UUID
 import kotlinx.coroutines.runBlocking
 import java.util.*
 

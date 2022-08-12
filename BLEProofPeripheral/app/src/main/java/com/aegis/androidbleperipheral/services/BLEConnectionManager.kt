@@ -1,4 +1,4 @@
-package com.rpt11.bleproofperipheral.services
+package com.aegis.androidbleperipheral.services
 
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattCharacteristic.*
@@ -8,7 +8,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
-import com.rpt11.bleproofperipheral.R
+import com.aegis.androidbleperipheral.R
 
 object BLEConnectionManager {
 

@@ -1,12 +1,12 @@
-package com.rpt11.bleproofperipheral.services
+package com.aegis.androidbleperipheral.services
 
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.os.ParcelUuid
 import android.util.Log
-import com.rpt11.bleproofperipheral.util.Constants
-import com.rpt11.bleproofperipheral.util.Constants.SERVICE_UUID
+import com.aegis.androidbleperipheral.util.Constants
+import com.aegis.androidbleperipheral.util.Constants.SERVICE_UUID
 import java.util.*
 
 object BLEAdvertiser {

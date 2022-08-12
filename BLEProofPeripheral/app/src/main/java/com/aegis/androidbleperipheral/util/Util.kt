@@ -1,4 +1,4 @@
-package com.rpt11.bleproofperipheral.util
+package com.aegis.androidbleperipheral.util
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -13,11 +13,10 @@ import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
-import com.rpt11.bleproofperipheral.MainActivity
-import com.rpt11.bleproofperipheral.R
-import com.rpt11.bleproofperipheral.services.BLEGattServer
-import com.rpt11.bleproofperipheral.util.Constants.BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
-import com.rpt11.bleproofperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
+import com.aegis.androidbleperipheral.R
+import com.aegis.androidbleperipheral.services.BLEGattServer
+import com.aegis.androidbleperipheral.util.Constants.BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
+import com.aegis.androidbleperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package com.rpt11.bleproofperipheral
+package com.aegis.androidbleperipheral
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -17,19 +17,18 @@ import android.os.ParcelUuid
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import com.rpt11.bleproofperipheral.util.Constants.BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
-import com.rpt11.bleproofperipheral.util.Constants.CCC_DESCRIPTOR_UUID
-import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_INDICATE_UUID
-import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_READ_UUID
-import com.rpt11.bleproofperipheral.util.Constants.CHAR_FOR_WRITE_UUID
-import com.rpt11.bleproofperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
-import com.rpt11.bleproofperipheral.util.Constants.SERVICE_UUID
-import com.rpt11.bleproofperipheral.databinding.ActivityMainBinding
-import com.rpt11.bleproofperipheral.util.AskType
-import com.rpt11.bleproofperipheral.util.Constants
-import com.rpt11.bleproofperipheral.util.hasPermissions
-import com.rpt11.bleproofperipheral.util.requestPermissionArray
+import com.aegis.androidbleperipheral.util.Constants.BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
+import com.aegis.androidbleperipheral.util.Constants.CCC_DESCRIPTOR_UUID
+import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_INDICATE_UUID
+import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_READ_UUID
+import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_WRITE_UUID
+import com.aegis.androidbleperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
+import com.aegis.androidbleperipheral.util.Constants.SERVICE_UUID
+import com.aegis.androidbleperipheral.databinding.ActivityMainBinding
+import com.aegis.androidbleperipheral.util.AskType
+import com.aegis.androidbleperipheral.util.Constants
+import com.aegis.androidbleperipheral.util.hasPermissions
+import com.aegis.androidbleperipheral.util.requestPermissionArray
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*

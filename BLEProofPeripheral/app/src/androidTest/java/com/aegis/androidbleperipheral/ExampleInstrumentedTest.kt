@@ -1,4 +1,4 @@
-package com.rpt11.bleproofperipheral
+package com.aegis.androidbleperipheral
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

@@ -1,4 +1,4 @@
-package com.rpt11.bleproofperipheral.services
+package com.aegis.androidbleperipheral.services
 
 import android.annotation.SuppressLint
 import android.app.Service
@@ -8,13 +8,13 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
-import com.rpt11.bleproofperipheral.util.Constants.ACTION_DATA_AVAILABLE
-import com.rpt11.bleproofperipheral.util.Constants.ACTION_DATA_WRITTEN
-import com.rpt11.bleproofperipheral.util.Constants.ACTION_GATT_CONNECTED
-import com.rpt11.bleproofperipheral.util.Constants.ACTION_GATT_DISCONNECTED
-import com.rpt11.bleproofperipheral.util.Constants.ACTION_GATT_SERVICES_DISCOVERED
-import com.rpt11.bleproofperipheral.util.Constants.EXTRA_DATA
-import com.rpt11.bleproofperipheral.util.Constants.EXTRA_UUID
+import com.aegis.androidbleperipheral.util.Constants.ACTION_DATA_AVAILABLE
+import com.aegis.androidbleperipheral.util.Constants.ACTION_DATA_WRITTEN
+import com.aegis.androidbleperipheral.util.Constants.ACTION_GATT_CONNECTED
+import com.aegis.androidbleperipheral.util.Constants.ACTION_GATT_DISCONNECTED
+import com.aegis.androidbleperipheral.util.Constants.ACTION_GATT_SERVICES_DISCOVERED
+import com.aegis.androidbleperipheral.util.Constants.EXTRA_DATA
+import com.aegis.androidbleperipheral.util.Constants.EXTRA_UUID
 import java.util.*
 import kotlin.experimental.and
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rpt11.bleproofperipheral.util
+package com.aegis.androidbleperipheral.util
 
 import android.os.ParcelUuid
 

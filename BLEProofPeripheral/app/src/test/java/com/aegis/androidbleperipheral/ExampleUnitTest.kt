@@ -1,4 +1,4 @@
-package com.rpt11.bleproofperipheral
+package com.aegis.androidbleperipheral
 
 import org.junit.Test
 
