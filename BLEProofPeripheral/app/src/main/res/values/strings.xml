@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BLE Peripheral</string>
+    <string name="app_name">Aegis AndroidBle</string>
     <string name="text_static_is_advertising">Advertising</string>
     <string name="text_connected">Central connected</string>
     <string name="text_disconnected">Central not connected</string>
@@ -19,4 +19,7 @@
     <string name="char_uuid_catch">Your Catch UUID</string>
     <string name="char_uuid_catch_all">Your Catch All UUID</string>
     <string name="char_uuid_missed_calls">Your Missed call UUID</string>
+    <string name="_0_subscribers">0 subscribers</string>
+    <string name="android_indication">Android indication</string>
+    <string name="android_for_read">Android for read</string>
 </resources>

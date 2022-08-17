@@ -10,6 +10,7 @@ import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -25,10 +26,7 @@ import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_WRITE_UUID
 import com.aegis.androidbleperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
 import com.aegis.androidbleperipheral.util.Constants.SERVICE_UUID
 import com.aegis.androidbleperipheral.databinding.ActivityMainBinding
-import com.aegis.androidbleperipheral.util.AskType
-import com.aegis.androidbleperipheral.util.Constants
-import com.aegis.androidbleperipheral.util.hasPermissions
-import com.aegis.androidbleperipheral.util.requestPermissionArray
+import com.aegis.androidbleperipheral.util.*
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -55,12 +53,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         appendLog("MainActivity.onCreate")
+        title = ""
 
         binding.switchAdvertising.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
+                connectivity(isChecked)
                 prepareAndStartAdvertising()
+                //connectivityStatus(isChecked,binding.textViewConnectionState)
             } else {
                 bleStopAdvertising()
+                connectivity(false)
             }
         }
     }
@@ -222,11 +224,17 @@ class MainActivity : AppCompatActivity() {
     private val gattServerCallback = object : BluetoothGattServerCallback() {
         override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
             runOnUiThread {
+                val connectionStatus: Boolean
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    connectionStatus=true
+                    connectivity(connectionStatus)
                     binding.textViewConnectionState.text = getString(R.string.text_connected)
                     appendLog("Central did connect")
                 } else {
+                    connectionStatus=false
+                    connectivity(connectionStatus)
                     binding.textViewConnectionState.text = getString(R.string.text_disconnected)
+                    binding.textViewConnectionState.backgroundTintList= ColorStateList.valueOf(resources.getColor(R.color.red))
                     appendLog("Central did disconnect")
                     subscribedDevices.remove(device)
                     updateSubscribersUI()
@@ -522,4 +530,7 @@ class MainActivity : AppCompatActivity() {
             }, 16)
         }
     }
+
+
+
 }
