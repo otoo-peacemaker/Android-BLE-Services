@@ -10,7 +10,6 @@ import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -18,6 +17,8 @@ import android.os.ParcelUuid
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.aegis.androidbleperipheral.databinding.ActivityMainBinding
+import com.aegis.androidbleperipheral.util.*
 import com.aegis.androidbleperipheral.util.Constants.BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
 import com.aegis.androidbleperipheral.util.Constants.CCC_DESCRIPTOR_UUID
 import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_INDICATE_UUID
@@ -25,9 +26,6 @@ import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_READ_UUID
 import com.aegis.androidbleperipheral.util.Constants.CHAR_FOR_WRITE_UUID
 import com.aegis.androidbleperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
 import com.aegis.androidbleperipheral.util.Constants.SERVICE_UUID
-import com.aegis.androidbleperipheral.databinding.ActivityMainBinding
-import com.aegis.androidbleperipheral.util.*
-import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,12 +39,14 @@ class MainActivity : AppCompatActivity() {
     private val bluetoothAdapter: BluetoothAdapter by lazy {
         bluetoothManager.adapter
     }
+
     //region BLE advertise
     private val bleAdvertiser by lazy {
         bluetoothAdapter.bluetoothLeAdvertiser
     }
 
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -57,23 +57,24 @@ class MainActivity : AppCompatActivity() {
 
         binding.switchAdvertising.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                connectivity(isChecked)
                 prepareAndStartAdvertising()
-                //connectivityStatus(isChecked,binding.textViewConnectionState)
             } else {
+                if (bluetoothAdapter.isEnabled) (
+                        bluetoothAdapter.disable()
+                        )
                 bleStopAdvertising()
-                connectivity(false)
+                updateSubscribersUI()
             }
         }
     }
 
     //checking advertising status
-   private var isAdvertising = false
+    private var isAdvertising = false
         set(value) {
             field = value
             // update visual state of the switch
             runOnUiThread {
-                Handler().postDelayed( {
+                Handler().postDelayed({
                     if (value != binding.switchAdvertising.isChecked)
                         binding.switchAdvertising.isChecked = value
                 }, 200)
@@ -89,6 +90,8 @@ class MainActivity : AppCompatActivity() {
                     bleStartAdvertising()
                 } else {
                     isAdvertising = false
+                    bleStopAdvertising()
+                    bleIndicate()
                 }
             }
         }
@@ -104,7 +107,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     //update the ui for number of subscribers
-     private fun updateSubscribersUI() {
+    private fun updateSubscribersUI() {
         val strSubscribers = "${subscribedDevices.count()} subscribers"
         runOnUiThread {
             binding.textViewSubscribers.text = strSubscribers
@@ -131,10 +134,11 @@ class MainActivity : AppCompatActivity() {
         isAdvertising = false
         bleStopGattServer()
         bleAdvertiser.stopAdvertising(advertiseCallback)
+        setStatusToDefault()
     }
 
     @SuppressLint("MissingPermission")
-     fun bleStartGattServer() {
+    fun bleStartGattServer() {
         val gattServer = bluetoothManager.openGattServer(this, gattServerCallback)
         val service = BluetoothGattService(
             UUID.fromString(SERVICE_UUID),
@@ -190,8 +194,8 @@ class MainActivity : AppCompatActivity() {
         .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
         .build()
 
-   /*Bluetooth LE advertising callbacks, used to deliver advertising operation status
-   on success and on failure*/
+    /*Bluetooth LE advertising callbacks, used to deliver advertising operation status
+    on success and on failure*/
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
             appendLog("Advertise start success\n$SERVICE_UUID")
@@ -226,17 +230,17 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 val connectionStatus: Boolean
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    connectionStatus=true
+                    connectionStatus = true
                     connectivity(connectionStatus)
-                    binding.textViewConnectionState.text = getString(R.string.text_connected)
+                    /* binding.textViewConnectionState.visibility = View.VISIBLE
+                     binding.textViewConnectionState.text = getString(R.string.text_connected)*/
                     appendLog("Central did connect")
                 } else {
-                    connectionStatus=false
-                    connectivity(connectionStatus)
+                    connectionStatus = false
                     binding.textViewConnectionState.text = getString(R.string.text_disconnected)
-                    binding.textViewConnectionState.backgroundTintList= ColorStateList.valueOf(resources.getColor(R.color.red))
                     appendLog("Central did disconnect")
                     subscribedDevices.remove(device)
+                    connectivity(connectionStatus)
                     updateSubscribersUI()
                 }
             }
@@ -251,7 +255,7 @@ class MainActivity : AppCompatActivity() {
             device: BluetoothDevice,
             requestId: Int,
             offset: Int,
-            characteristic: BluetoothGattCharacteristic
+            characteristic: BluetoothGattCharacteristic,
         ) {
             var log = "onCharacteristicRead offset=$offset"
             if (characteristic.uuid == UUID.fromString(CHAR_FOR_READ_UUID)) {
@@ -282,7 +286,7 @@ class MainActivity : AppCompatActivity() {
             preparedWrite: Boolean,
             responseNeeded: Boolean,
             offset: Int,
-            value: ByteArray?
+            value: ByteArray?,
         ) {
             var log =
                 "onCharacteristicWrite offset=$offset responseNeeded=$responseNeeded preparedWrite=$preparedWrite"
@@ -301,7 +305,12 @@ class MainActivity : AppCompatActivity() {
                     "\nresponse=notNeeded, value=\"$strValue\""
                 }
                 runOnUiThread {
-                    binding.textViewCharForWrite.text = strValue
+                    val keyValue = strValue.split(",")
+                    val key = keyValue[0]
+                    val values = keyValue[1]
+                    displayWritableValues(binding.textViewCharForWrite,
+                        binding.value,
+                        KeyValuePair(key, value = values), latId = binding.lat, longId = binding.lng)
                 }
             } else {
                 log += if (responseNeeded) {
@@ -319,7 +328,7 @@ class MainActivity : AppCompatActivity() {
             device: BluetoothDevice,
             requestId: Int,
             offset: Int,
-            descriptor: BluetoothGattDescriptor
+            descriptor: BluetoothGattDescriptor,
         ) {
             var log = "onDescriptorReadRequest"
             if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
@@ -352,7 +361,7 @@ class MainActivity : AppCompatActivity() {
             preparedWrite: Boolean,
             responseNeeded: Boolean,
             offset: Int,
-            value: ByteArray
+            value: ByteArray,
         ) {
             var strLog = "onDescriptorWriteRequest"
             if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
@@ -362,6 +371,7 @@ class MainActivity : AppCompatActivity() {
                         subscribedDevices.add(device)
                         status = BluetoothGatt.GATT_SUCCESS
                         strLog += ", subscribed"
+
                     } else if (Arrays.equals(
                             value,
                             BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
@@ -388,7 +398,8 @@ class MainActivity : AppCompatActivity() {
     //endregion
 
     private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
-    private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
+    private var permissionResultHandlers =
+        mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -403,7 +414,7 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionResultHandlers[requestCode]?.let { handler ->
@@ -441,7 +452,6 @@ class MainActivity : AppCompatActivity() {
 
             // set activity result handler
             activityResultHandlers[requestCode] = { result ->
-                Unit
                 val isSuccess = result == Activity.RESULT_OK
                 if (isSuccess || askType != AskType.InsistUntilSuccess) {
                     activityResultHandlers.remove(requestCode)
@@ -458,7 +468,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun grantBluetoothPeripheralPermissions(
         askType: AskType,
-        completion: (Boolean) -> Unit
+        completion: (Boolean) -> Unit,
     ) {
         val wantedPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
@@ -493,7 +503,6 @@ class MainActivity : AppCompatActivity() {
     //endregion
 
 
-
     @SuppressLint("MissingPermission")
     private fun bleStopGattServer() {
         gattServer?.close()
@@ -507,17 +516,33 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingPermission")
     private fun bleIndicate() {
         val text = binding.editTextCharForIndicate.text.toString()
-        val data = text.toByteArray(Charsets.UTF_8)
+        val notice = "offNotice"
+        val data = notice.toByteArray(Charsets.UTF_8)
         charForIndicate?.let {
             it.value = data
             for (device in subscribedDevices) {
-                appendLog("sending indication \"$text\"")
+                appendLog("sending indication \"$notice\"")
                 gattServer?.notifyCharacteristicChanged(device, it, true)
             }
         }
     }
 
-     @SuppressLint("SetTextI18n")
+
+     @SuppressLint("MissingPermission")
+    private fun indicateMAC() {
+        val notice = getMacAddress()
+        val data = notice.toByteArray(Charsets.UTF_8)
+        charForIndicate?.let {
+            it.value = data
+            for (device in subscribedDevices) {
+                appendLog("sending mac address \"$notice\"")
+                gattServer?.notifyCharacteristicChanged(device, it, true)
+            }
+        }
+    }
+
+
+    @SuppressLint("SetTextI18n")
     private fun appendLog(message: String) {
         Log.d("appendLog", message)
         runOnUiThread {
@@ -530,7 +555,6 @@ class MainActivity : AppCompatActivity() {
             }, 16)
         }
     }
-
 
 
 }

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Aegis AndroidBle</string>
-    <string name="text_static_is_advertising">Advertising</string>
+    <string name="text_static_is_advertising">Advertising.......</string>
     <string name="text_connected">Central connected</string>
     <string name="text_disconnected">Central not connected</string>
     <string name="text_static_char_for_read">Readable characteristic:</string>
@@ -22,4 +22,13 @@
     <string name="_0_subscribers">0 subscribers</string>
     <string name="android_indication">Android indication</string>
     <string name="android_for_read">Android for read</string>
+    <string name="height">Height</string>
+    <string name="distance">Distance</string>
+    <string name="scale">Scale</string>
+    <string name="hud_pitch">Hud Pitch</string>
+    <string name="eye_pitch">Eye Pitch</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="type">Type</string>
+    <string name="value">Value</string>
 </resources>

@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
@@ -19,6 +20,7 @@ import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import com.aegis.androidbleperipheral.R
 import com.aegis.androidbleperipheral.services.BLEGattServer
+import com.aegis.androidbleperipheral.services.GetMACAddress
 import com.aegis.androidbleperipheral.util.Constants.BLUETOOTH_ALL_PERMISSIONS_REQUEST_CODE
 import com.aegis.androidbleperipheral.util.Constants.ENABLE_BLUETOOTH_REQUEST_CODE
 import kotlinx.coroutines.Dispatchers
@@ -32,10 +34,7 @@ import java.util.*
 //Logs
 
 @SuppressLint("SetTextI18n")
-fun Activity.appendLogs(message: String) {
-    val view = layoutInflater.inflate(R.layout.activity_main, null)
-    val textViewLog = view.findViewById<TextView>(R.id.textViewLog)
-    val scrollViewLog = view.findViewById<ScrollView>(R.id.scrollViewLog)
+fun Activity.appendLogs(message: String, textViewLog: TextView, scrollViewLog:ScrollView) {
     Log.d("appendLog", message)
 
     runBlocking {
@@ -137,11 +136,7 @@ private var activityResultHandlers = mutableMapOf<Int, (Int) -> Unit>()
 private var permissionResultHandlers = mutableMapOf<Int, (Array<out String>, IntArray) -> Unit>()
 
 
-//region Permissions and Settings management
-enum class AskType {
-    AskOnce,
-    InsistUntilSuccess
-}
+
 
 
 fun Activity.connectivity(status: Boolean) {
@@ -149,20 +144,86 @@ fun Activity.connectivity(status: Boolean) {
     val context = this
     window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
     window.clearFlags(FLAG_TRANSLUCENT_STATUS)
-    when (status) {
-        true -> window.statusBarColor = this.resources.getColor(R.color.purple_700)
-        false -> window.statusBarColor = context.resources.getColor(R.color.red)
+    runBlocking {
+        when (status) {
+            true -> window.statusBarColor = context.resources.getColor(R.color.purple_700)
+            false -> {
+                window.statusBarColor = context.resources.getColor(R.color.red)
+            }
+        }
+
     }
+
 }
 
+
+fun Activity.setStatusToDefault() {
+    val window = this.window
+    val context = this
+    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+    window.clearFlags(FLAG_TRANSLUCENT_STATUS)
+    runOnUiThread {
+        Handler().postDelayed({
+            window.statusBarColor = context.resources.getColor(android.R.color.transparent)
+        }, 3000)
+    }
+}
 
 fun Activity.connectivityStatus(status: Boolean, resId: TextView) {
-    when (status) {
-        true -> {
-            resId.setBackgroundColor(this.resources.getColor(R.color.purple_700))
+    val context = this
+    runBlocking {
+        when (status) {
+            true -> {
+                resId.setBackgroundColor(context.resources.getColor(R.color.purple_700))
+            }
+            false -> {
+                resId.setBackgroundColor(context.resources.getColor(R.color.red))
+            }
         }
-        false -> {
-            resId.setBackgroundColor(this.resources.getColor(R.color.red))
+    }
+
+}
+
+
+fun Activity.displayWritableValues(
+    labelId: TextView,
+    valueId: TextView,
+    valuePairs: KeyValuePair,
+    latId: TextView? = null,
+    longId: TextView? = null,
+) {
+    return with(valuePairs) {
+        when (key) {
+            "1" -> {
+                labelId.text = getString(R.string.distance)
+                valueId.text = value
+            }
+            "2" -> {
+                labelId.text = getString(R.string.height)
+                valueId.text = value
+            }
+            "3" -> {
+                labelId.text = getString(R.string.scale)
+                valueId.text = value
+            }
+            "4" -> {
+                labelId.text = getString(R.string.hud_pitch)
+                valueId.text = value
+            }
+            "5" -> {
+                labelId.text = getString(R.string.eye_pitch)
+                valueId.text = value
+            }
+            else -> {
+                latId?.text = key
+                longId?.text = value
+            }
         }
     }
 }
+
+fun getMacAddress(): String{
+    val address = GetMACAddress()
+    return address.macAddress
+}
+
