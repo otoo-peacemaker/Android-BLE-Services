@@ -27,8 +27,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.net.NetworkInterface
 import java.text.SimpleDateFormat
 import java.util.*
+import android.provider.Settings
 
 
 //Logs
@@ -224,6 +226,50 @@ fun Activity.displayWritableValues(
 
 fun getMacAddress(): String{
     val address = GetMACAddress()
-    return address.macAddress
+    return address.macAddr
 }
+
+
+@SuppressLint("HardwareIds")
+fun Activity.getDeviceID():String{
+    return Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+}
+
+
+
+fun getMACAddress(): String {
+    try {
+        val all = Collections.list(NetworkInterface.getNetworkInterfaces())
+        for (nif in all) {
+            if (!nif.name.equals("wlan0", ignoreCase=true)) continue
+            val macBytes = nif.hardwareAddress ?: return ""
+            val res1 = StringBuilder()
+            for (b in macBytes) {
+                //res1.append(Integer.toHexString(b & 0xFF) + ":");
+                res1.append(String.format("%02X:", b))
+            }
+            if (res1.isNotEmpty()) {
+                res1.deleteCharAt(res1.length - 1)
+            }
+            return res1.toString()
+        }
+    } catch (ex: Exception) {
+    }
+    return "02:00:00:00:00:00"
+}
+
+fun getMac(): String? =
+        try {
+            NetworkInterface.getNetworkInterfaces()
+                    .toList()
+                    .find { networkInterface -> networkInterface.name.equals("wlan0", ignoreCase = true) }
+                    ?.hardwareAddress
+                    ?.joinToString(separator = ":") { byte -> "%02X".format(byte) }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            null
+        }
+
+
+
 

@@ -29,6 +29,7 @@ import com.aegis.androidbleperipheral.util.Constants.SERVICE_UUID
 import java.text.SimpleDateFormat
 import java.util.*
 
+@SuppressLint("MissingPermission")
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
@@ -46,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "HardwareIds")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -54,18 +55,26 @@ class MainActivity : AppCompatActivity() {
 
         appendLog("MainActivity.onCreate")
         title = ""
+        var isCheckedOrNot: Boolean
 
         binding.switchAdvertising.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
+            isCheckedOrNot = isChecked
+            if (isCheckedOrNot) {
                 prepareAndStartAdvertising()
-            } else {
-                if (bluetoothAdapter.isEnabled) (
-                        bluetoothAdapter.disable()
-                        )
-                bleStopAdvertising()
-                updateSubscribersUI()
+                appendLog("DEVICE NAME    :" + bluetoothAdapter.name)
+                appendLog("DEVICE ADDRESS :" + bluetoothAdapter.address)
+                appendLog("ANDROID ID : " + getDeviceID())
+
+            } else if (bluetoothAdapter.isEnabled) {
+                bluetoothAdapter.disable()
+                //binding.switchAdvertising.isChecked=false
+                appendLog("Bluetooth is off")
+            }else{
+                binding.switchAdvertising.isChecked=false
+                appendLog("Bluetooth is off")
             }
         }
+
     }
 
     //checking advertising status
@@ -81,17 +90,31 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    @SuppressLint("MissingPermission")
+
+
+    fun getAddress() {
+        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter.bondedDevices
+        pairedDevices?.forEach { device ->
+            val deviceName = device.name
+            val deviceHardwareAddress = device.address // MAC address
+        }
+    }
+
+
+
     //Prepare and start advertising near by devices
     private fun prepareAndStartAdvertising() {
         ensureBluetoothCanBeUsed { isSuccess, message ->
             runOnUiThread {
+                binding.textViewSubscribers.text = getString(R.string.subscribers)
                 appendLog(message)
                 if (isSuccess) {
                     bleStartAdvertising()
                 } else {
                     isAdvertising = false
                     bleStopAdvertising()
-                    bleIndicate()
+                    binding.textViewSubscribers.text = getString(R.string.subscribers)
                 }
             }
         }
@@ -235,6 +258,7 @@ class MainActivity : AppCompatActivity() {
                     /* binding.textViewConnectionState.visibility = View.VISIBLE
                      binding.textViewConnectionState.text = getString(R.string.text_connected)*/
                     appendLog("Central did connect")
+                    indicateMAC()
                 } else {
                     connectionStatus = false
                     binding.textViewConnectionState.text = getString(R.string.text_disconnected)
@@ -310,7 +334,9 @@ class MainActivity : AppCompatActivity() {
                     val values = keyValue[1]
                     displayWritableValues(binding.textViewCharForWrite,
                         binding.value,
-                        KeyValuePair(key, value = values), latId = binding.lat, longId = binding.lng)
+                        KeyValuePair(key, value = values),
+                        latId = binding.lat,
+                        longId = binding.lng)
                 }
             } else {
                 log += if (responseNeeded) {
@@ -528,14 +554,14 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-     @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission", "HardwareIds")
     private fun indicateMAC() {
-        val notice = getMacAddress()
-        val data = notice.toByteArray(Charsets.UTF_8)
+        val deviceId = getDeviceID()
+        val data = deviceId.toByteArray(Charsets.UTF_8)
         charForIndicate?.let {
             it.value = data
             for (device in subscribedDevices) {
-                appendLog("sending mac address \"$notice\"")
+                appendLog("sending mac address \"$deviceId\"")
                 gattServer?.notifyCharacteristicChanged(device, it, true)
             }
         }

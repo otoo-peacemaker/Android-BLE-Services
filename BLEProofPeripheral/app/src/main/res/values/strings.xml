@@ -4,7 +4,7 @@
     <string name="text_connected">Central connected</string>
     <string name="text_disconnected">Central not connected</string>
     <string name="text_static_char_for_read">Readable characteristic:</string>
-    <string name="text_static_char_for_write">Writeable characteristic:</string>
+    <string name="text_static_char_for_write">Writeable characteristics: </string>
     <string name="text_static_char_for_indicate">Indicate (notify) characteristic:</string>
     <string name="button_send">Send</string>
     <string name="button_clear_log">Clear</string>
@@ -31,4 +31,5 @@
     <string name="longitude">Longitude</string>
     <string name="type">Type</string>
     <string name="value">Value</string>
+    <string name="subscribers">0 subscribers</string>
 </resources>
